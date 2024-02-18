@@ -207,7 +207,6 @@ async def search(vyraz : str):
 
     sloupce = ["jmeno_prijmeni", "tema", "obsah", "prakticka_cast", "vedouci"]
     platne_prace = []
-    platne_prace_dict = {}
 
     for sloupec in sloupce:
         data = supabase.table("tasks").select("*").ilike(f"{sloupec}", f"%{vyraz}%").execute()
@@ -221,7 +220,7 @@ async def search(vyraz : str):
                     
     if platne_prace == []:
         return {"Message": "Žádná práce nebyla nalezena!"}
-
+    
     return platne_prace
 
 @app.post("/search-by-filter")
@@ -321,8 +320,18 @@ async def filtr(filtr : Filtr):
 
     return data
 
+@app.get("/get-vedouci")
+async def getVedouci():
+    vedouci = []
 
+    data = supabase.table("tasks").select("*").execute()
+    data = data.dict()["data"]
 
+    for prace in data:
+        if prace["vedouci"] not in vedouci:
+            vedouci.append(prace["vedouci"])
+
+    return vedouci
 
 # Obory
 #26-41-M/01 Elektrotechnika
