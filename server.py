@@ -219,9 +219,9 @@ async def search(vyraz : str):
                 if prace not in platne_prace:
                     platne_prace.append(prace)
                     
-    
+    if platne_prace == []:
+        return {"Message": "Žádná práce nebyla nalezena!"}
 
-                    
     return platne_prace
 
 @app.post("/search-by-filter")
@@ -244,7 +244,8 @@ async def filtr(filtr : Filtr):
     if filtr.vedouci == "" or filtr.vedouci == "string":
         filtr.vedouci = None
 
-
+    if filtr.tagy == [] or filtr.tagy[0] == "string":
+        filtr.tagy = None
 
     
     # filtrovani oboru
