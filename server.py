@@ -46,10 +46,7 @@ class Task(BaseModel):
     obsah           : Optional[str] = None
     prakticka_cast  : Optional[str] = None
     vedouci         : Optional[str] = None
-    #trida           : Optional[str] = None
-    #jmeno           : Optional[str] = None
-    #prijmeni        : Optional[str] = None
-    #datum_narozeni  : Optional[str] = None
+    
 
 class newUser(BaseModel):
     login           : str
