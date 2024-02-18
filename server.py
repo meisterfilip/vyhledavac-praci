@@ -316,7 +316,20 @@ async def filtr(filtr : Filtr):
         platne_prace = []
         if data == []:
             return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
+        
+    # tagy
 
+    if filtr.tagy != None:
+
+        for tag in filtr.tagy:
+            for prace in data:
+                for sloupec in prace:
+                    if str(tag).lower() in str(prace[sloupec]).lower() and sloupec != "id":
+                        if prace not in platne_prace:
+                            platne_prace.append(prace)
+
+        data = platne_prace
+        platne_prace = []
 
     return data
 
@@ -332,6 +345,19 @@ async def getVedouci():
             vedouci.append(prace["vedouci"])
 
     return vedouci
+
+@app.get("/get-predmety")
+async def getPredmety():
+    predmety = []
+
+    data = supabase.table("tasks").select("*").execute()
+    data = data.dict()["data"]
+
+    for prace in data:
+        if prace["predmet"] not in predmety:
+            predmety.append(prace["predmet"])
+
+    return predmety
 
 # Obory
 #26-41-M/01 Elektrotechnika
