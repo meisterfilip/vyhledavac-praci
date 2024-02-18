@@ -66,7 +66,6 @@ class Filtr(BaseModel):
     tagy            : Optional[list] = None
 
 
-
 # endpoint k overeni, zda API funguje
 
 @app.get("/")
@@ -228,7 +227,7 @@ async def search(vyraz : str):
 @app.post("/search-by-filter")
 async def filtr(filtr : Filtr):
 
-    if filtr.obor[0] == "string":
+    if filtr.obor == [] or filtr.obor[0] == "string":
         filtr.obor = None
 
     if filtr.pocatecni_rok == 0:
@@ -239,10 +238,10 @@ async def filtr(filtr : Filtr):
         aktualni_rok = today.year
         filtr.koncovy_rok = aktualni_rok
 
-    if filtr.predmet[0] == "string":
+    if filtr.predmet == [] or filtr.predmet[0] == "string":
         filtr.predmet = None
 
-    if filtr.vedouci == "string":
+    if filtr.vedouci == "" or filtr.vedouci == "string":
         filtr.vedouci = None
 
 
