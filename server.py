@@ -61,7 +61,7 @@ class Filtr(BaseModel):
     obor            : Optional[list] = None
     pocatecni_rok   : Optional[int] = None
     koncovy_rok     : Optional[int] = None
-    predmet         : Optional[list] = None
+    predmet         : Optional[str] = None
     vedouci         : Optional[str] = None
     tagy            : Optional[list] = None
 
@@ -237,7 +237,7 @@ async def filtr(filtr : Filtr):
         aktualni_rok = today.year
         filtr.koncovy_rok = aktualni_rok
 
-    if filtr.predmet == [] or filtr.predmet[0] == "string":
+    if filtr.predmet == "" or filtr.predmet == "string":
         filtr.predmet = None
 
     if filtr.vedouci == "" or filtr.vedouci == "string":
@@ -296,7 +296,7 @@ async def filtr(filtr : Filtr):
 
     if filtr.predmet != None:
         for prace in data:
-            if prace["predmet"] in filtr.predmet:
+            if prace["predmet"].lower() == filtr.predmet.lower():
                 platne_prace.append(prace)
 
         data = platne_prace
@@ -309,7 +309,7 @@ async def filtr(filtr : Filtr):
 
     if filtr.vedouci != None:
         for prace in data:
-            if prace["vedouci"] == filtr.vedouci:
+            if prace["vedouci"].lower() == filtr.vedouci.lower():
                 platne_prace.append(prace)
 
         data = platne_prace
