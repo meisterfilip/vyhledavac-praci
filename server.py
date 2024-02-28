@@ -120,10 +120,6 @@ async def delete_task_by_id(id):
     else:
         return {"Error": f"Task s ID {id} nebyl nalezen! Smazani neproběhlo!"}
     
-@app.get("/test")
-async def test():
-    load_ids()
-    return 0
 
 # endpoint na registraci noveho uzivatele
 
@@ -349,7 +345,8 @@ async def getVedouci():
 @app.get("/get-predmety")
 async def getPredmety():
     predmety = []
-
+    
+    
     data = supabase.table("tasks").select("*").execute()
     data = data.dict()["data"]
 
@@ -358,6 +355,31 @@ async def getPredmety():
             predmety.append(prace["predmet"])
 
     return predmety
+
+
+
+@app.get("/load-prvnich-deset")
+async def loadPrvnichDeset():
+
+    data = supabase.table("tasks").select("*").execute()
+    data = data.dict()["data"]
+    print(data[0:10])
+
+    return data[0:10]
+
+@app.get("/load-more")
+async def loadMore(strana : int):
+
+    data = supabase.table("tasks").select("*").execute()
+    data = data.dict()["data"]
+
+    pocet = len(data) # promenna ktera rika kolik zaznamu je v databazi
+    
+
+    startIndex = strana * 10 - 10
+    endIndex = strana * 10
+
+    return data[startIndex:endIndex]
 
 # Obory
 #26-41-M/01 Elektrotechnika
