@@ -367,26 +367,13 @@ async def loadPrvnichDeset():
 
     return data[0:10]
 
-@app.get("/load-more")
+@app.get("/load-page/{strana}")
 async def loadMore(strana : int):
 
     data = supabase.table("tasks").select("*").execute()
     data = data.dict()["data"]
 
-    pocet = len(data) # promenna ktera rika kolik zaznamu je v databazi
-    
-
     startIndex = strana * 10 - 10
     endIndex = strana * 10
 
     return data[startIndex:endIndex]
-
-# Obory
-#26-41-M/01 Elektrotechnika
-#18-20-M/01 Informační technologie
-#23-41-M/01 Strojírenství
-
-# Školní rok
-#
-#
-#
