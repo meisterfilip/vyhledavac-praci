@@ -373,7 +373,20 @@ async def loadMore(strana : int):
     data = supabase.table("tasks").select("*").execute()
     data = data.dict()["data"]
 
-    startIndex = strana * 10 - 10
-    endIndex = strana * 10
+    startIndex = strana * 15 - 15
+    endIndex = strana * 15
 
     return data[startIndex:endIndex]
+
+@app.post("/upload-file")
+async def uploadFile(file : UploadFile):
+    try:
+        
+        file_content = file.file.read()
+        filename = file.filename
+        supabase.storage.from_("soubory").upload(file=file_content, path=f"files/{filename}")
+
+        return {"Message" : "Soubor byl úspěšně nahrán!"}
+        
+    except Exception as e:
+        return {"Message" : f"{e}"}
