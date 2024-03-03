@@ -1,19 +1,9 @@
 # import knihovny databazoveho systemu Supabase a knihovny OS
 
+from tridy import *
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
-load_dotenv()
-
-
-# vytvoreni klienta databaze
-
-url = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_KEY")
-supabase = create_client(url, key)
-
-# import knihoven FastAPI
-
 from fastapi import FastAPI, Path, UploadFile
 from pydantic import BaseModel
 from typing import Optional
@@ -21,12 +11,16 @@ from fastapi.middleware.cors import CORSMiddleware
 import hashlib
 import datetime
 
+load_dotenv()
+
+# vytvoreni klienta databaze
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_KEY")
+supabase = create_client(url, key)
 
 app = FastAPI()
 
-
 # konfigurace FastAPI, aby mohla bezet na vsech adresach
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,47 +29,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# basemodel maturitni prace
-
-class Task(BaseModel):
-    obor            : Optional[str] = None
-    skolni_rok      : Optional[str] = None
-    jmeno_prijmeni  : Optional[str] = None
-    predmet         : Optional[str] = None
-    tema            : Optional[str] = None
-    obsah           : Optional[str] = None
-    prakticka_cast  : Optional[str] = None
-    vedouci         : Optional[str] = None
-    
-
-class newUser(BaseModel):
-    login           : str
-    password        : str
-    password_again  : str
-
-class User(BaseModel):
-    login       : str
-    password    : str
-
-class Filtr(BaseModel):
-    obor            : Optional[list] = None
-    pocatecni_rok   : Optional[int] = None
-    koncovy_rok     : Optional[int] = None
-    predmet         : Optional[str] = None
-    vedouci         : Optional[str] = None
-    tagy            : Optional[list] = None
-
 
 # endpoint k overeni, zda API funguje
-
 @app.get("/")
 async def index():
     return {"Message": "API funguje!"}
+    
 
 # endpoint search_id - vyhleda radek v databazi se zadanym ID a vrati vsechny data tohoto radku
-
 @app.get("/search_task_by_id/{id}")
-async def search_task_by_id(id: int):
+async def APIsearch_task_by_id(id: int):
 
     try:
         data = supabase.table("tasks").select("*").eq("id", f"{id}").execute()
@@ -85,18 +48,20 @@ async def search_task_by_id(id: int):
     except:
         return {"Error": f"Task s id {id} neexistuje"}
     
+
 @app.get("/print_ids")
 async def print_ids():
     data = supabase.table("tasks").select("id").execute()
     return data
+
 
 @app.post("/create_task")
 async def create_task(task : Task):
     data = supabase.table("tasks").insert(task.dict()).execute()
     return task
 
-# funkce load_ids() slouzi k nacteni ID vsech praci v db do pole (all_ids)
 
+# funkce load_ids() slouzi k nacteni ID vsech praci v db do pole (all_ids)
 async def load_ids():
     all_ids = []
     db_response = supabase.table("tasks").select("id").execute().dict()["data"]
@@ -106,8 +71,8 @@ async def load_ids():
 
     return all_ids
 
-# endpoint delete_id - vyhleda radek v databazi se zadanym ID a vymaze cely radek s timto ID (DODELAT RETURN!!!)
 
+# endpoint delete_id - vyhleda radek v databazi se zadanym ID a vymaze cely radek s timto ID (DODELAT RETURN!!!)
 @app.delete("/delete_task_by_id/{id}")
 async def delete_task_by_id(id):
 
@@ -122,7 +87,6 @@ async def delete_task_by_id(id):
     
 
 # endpoint na registraci noveho uzivatele
-
 @app.post("/register")
 async def register(newuser : newUser):
 
@@ -155,8 +119,8 @@ async def register(newuser : newUser):
 
     return {"Message": f"Uzivatel {newuser.login} uspesne zaregistrovan!"}
 
-# endpoint na login uzivatele
 
+# endpoint na login uzivatele
 @app.post("/login")
 async def login(user : User):
 
@@ -195,9 +159,7 @@ async def download_file():
     return {"Message": data}
 
 
-
 # SYSTÉM VYHLEDÁVÁNÍ
-
 @app.post("/search")
 async def search(vyraz : str):
 
@@ -329,6 +291,7 @@ async def filtr(filtr : Filtr):
 
     return data
 
+
 @app.get("/get-vedouci")
 async def getVedouci():
     vedouci = []
@@ -341,6 +304,7 @@ async def getVedouci():
             vedouci.append(prace["vedouci"])
 
     return vedouci
+
 
 @app.get("/get-predmety")
 async def getPredmety():
@@ -357,7 +321,6 @@ async def getPredmety():
     return predmety
 
 
-
 @app.get("/load-prvnich-deset")
 async def loadPrvnichDeset():
 
@@ -366,6 +329,7 @@ async def loadPrvnichDeset():
     print(data[0:10])
 
     return data[0:10]
+
 
 @app.get("/load-page/{strana}")
 async def loadMore(strana : int):
@@ -377,6 +341,7 @@ async def loadMore(strana : int):
     endIndex = strana * 15
 
     return data[startIndex:endIndex]
+
 
 @app.post("/upload-file")
 async def uploadFile(file : UploadFile):
