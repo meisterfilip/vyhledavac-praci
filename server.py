@@ -38,7 +38,7 @@ async def index():
 
 # endpoint search_id - vyhleda radek v databazi se zadanym ID a vrati vsechny data tohoto radku
 @app.get("/search_task_by_id/{id}")
-async def APIsearch_task_by_id(id: int):
+async def search_task_by_id(id: int):
 
     try:
         data = supabase.table("tasks").select("*").eq("id", f"{id}").execute()
@@ -320,6 +320,20 @@ async def getPredmety():
 
     return predmety
 
+@app.get("/get-autori")
+async def getAutori():
+    autori = []
+    
+    
+    data = supabase.table("tasks").select("*").execute()
+    data = data.dict()["data"]
+
+    for prace in data:
+        if prace["jmeno_prijmeni"] not in autori:
+            autori.append(prace["jmeno_prijmeni"])
+
+    return autori
+
 
 @app.get("/load-prvnich-deset")
 async def loadPrvnichDeset():
@@ -355,3 +369,18 @@ async def uploadFile(file : UploadFile):
         
     except Exception as e:
         return {"Message" : f"{e}"}
+
+@app.get("/get-oldest-year")
+async def getOldestYear():
+
+    data = supabase.table("tasks").select("*").execute()
+    data = data.dict()["data"]
+
+    oldestYear = int(data[0]["skolni_rok"][0:4])
+
+    for prace in data:
+        if int(prace["skolni_rok"][0:4]) < oldestYear:
+            oldestYear = int(prace["skolni_rok"][0:4])
+
+
+    return oldestYear
