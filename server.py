@@ -10,6 +10,7 @@ from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import hashlib
 import datetime
+from math import ceil
 
 load_dotenv()
 
@@ -505,4 +506,11 @@ async def filtrStrana(strana: int, filtr: Filtr, sortBy: str):
     startIndex = strana * 15 - 15
     endIndex = strana * 15
 
-    return sorted_data[startIndex:endIndex]
+    return {"pocet_stran": getPageCount(sorted_data), "prace" : sorted_data[startIndex:endIndex]}
+
+
+def getPageCount(tasks: list):
+    pocetPraci = len(tasks)
+    pocetStran = ceil(pocetPraci / 15)
+
+    return pocetStran
