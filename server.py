@@ -384,3 +384,125 @@ async def getOldestYear():
 
 
     return oldestYear
+
+@app.post("/filtr-strana/{strana}")
+async def filtrStrana(strana: int, filtr: Filtr, sortBy: str):
+
+    if filtr.obor == [] or filtr.obor[0] == "string":
+        filtr.obor = None
+
+    if filtr.pocatecni_rok == 0:
+        filtr.pocatecni_rok = 2000
+
+    if filtr.koncovy_rok == 0:
+        today = datetime.date.today()
+        aktualni_rok = today.year
+        filtr.koncovy_rok = aktualni_rok
+
+    if filtr.predmet == "" or filtr.predmet == "string":
+        filtr.predmet = None
+
+    if filtr.vedouci == "" or filtr.vedouci == "string":
+        filtr.vedouci = None
+
+    if filtr.tagy == [] or filtr.tagy[0] == "string":
+        filtr.tagy = None
+
+    
+    # filtrovani oboru
+    
+    platne_prace = []
+        
+        
+    if filtr.obor != None:
+        data = supabase.table("tasks").select("*").execute()
+        data = data.dict()
+        data = data["data"]
+        for prace in data:
+            if prace["obor"] in filtr.obor:
+                platne_prace.append(prace)
+
+
+    else:
+        data = supabase.table("tasks").select("*").execute()
+        data = data.dict()
+        data = data["data"]
+        platne_prace = data
+        
+
+    
+    if platne_prace == []:
+        return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
+
+    data = platne_prace
+    platne_prace = []
+
+    # filtrovani roku
+    
+    if filtr.pocatecni_rok != None or filtr.koncovy_rok != None:
+        for prace in data:
+            #print(prace["skolni_rok"][5:9])
+            koncovy_rok = int(prace["skolni_rok"][5:9]) #vezme koncovy rok z promenne skolni_rok a prevede ho na int
+            pocatecni_rok = koncovy_rok - 1
+            if (koncovy_rok >= filtr.pocatecni_rok) and (pocatecni_rok <= filtr.koncovy_rok):
+                platne_prace.append(prace)
+
+        data = platne_prace
+        platne_prace = []
+
+        if data == []:
+            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
+
+
+    # filtrovani predmetu
+
+    if filtr.predmet != None:
+        for prace in data:
+            if prace["predmet"].lower() == filtr.predmet.lower():
+                platne_prace.append(prace)
+
+        data = platne_prace
+        platne_prace = []
+        if data == []:
+            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
+    
+    
+    # filtrovani vedouciho
+
+    if filtr.vedouci != None:
+        for prace in data:
+            if prace["vedouci"].lower() == filtr.vedouci.lower():
+                platne_prace.append(prace)
+
+        data = platne_prace
+        platne_prace = []
+        if data == []:
+            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
+        
+    # tagy
+
+    if filtr.tagy != None:
+
+        for tag in filtr.tagy:
+            for prace in data:
+                for sloupec in prace:
+                    if str(tag).lower() in str(prace[sloupec]).lower() and sloupec != "id":
+                        if prace not in platne_prace:
+                            platne_prace.append(prace)
+
+        data = platne_prace
+        platne_prace = []
+    
+    if sortBy == "tema":
+        sorted_data = sorted(data, key=lambda x: x["tema"])
+
+    if sortBy == "jmeno_prijmeni":
+        sorted_data = sorted(data, key=lambda x: x["jmeno_prijmeni"])
+
+    if sortBy == "skolni_rok":
+        sorted_data = sorted(data, key=lambda x: x["skolni_rok"])
+
+    startIndex = strana * 15 - 15
+    endIndex = strana * 15
+
+    return sorted_data[startIndex:endIndex]
