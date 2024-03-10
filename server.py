@@ -387,7 +387,7 @@ async def getOldestYear():
     return oldestYear
 
 @app.post("/filtr-strana/{strana}")
-async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, direction: str):
+async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, directionDown: bool):
 
     if filtr.obor == [] or filtr.obor[0] == "string":
         filtr.obor = None
@@ -503,7 +503,7 @@ async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, direction: str):
 
     sorted_data = sorted_data[startIndex:endIndex]
 
-    if direction == "Z-A":
+    if directionDown == False:
         sorted_data.reverse()
 
     return {"pocet_stran": pocet_stran, "prace" : sorted_data}
