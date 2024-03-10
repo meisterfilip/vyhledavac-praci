@@ -387,7 +387,7 @@ async def getOldestYear():
     return oldestYear
 
 @app.post("/filtr-strana/{strana}")
-async def filtrStrana(strana: int, filtr: Filtr, sortBy: str):
+async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, direction: str):
 
     if filtr.obor == [] or filtr.obor[0] == "string":
         filtr.obor = None
@@ -494,19 +494,19 @@ async def filtrStrana(strana: int, filtr: Filtr, sortBy: str):
         data = platne_prace
         platne_prace = []
     
-    if sortBy == "tema":
-        sorted_data = sorted(data, key=lambda x: x["tema"])
+    pocet_stran = getPageCount(data)
 
-    if sortBy == "jmeno_prijmeni":
-        sorted_data = sorted(data, key=lambda x: x["jmeno_prijmeni"])
-
-    if sortBy == "skolni_rok":
-        sorted_data = sorted(data, key=lambda x: x["skolni_rok"])
+    sorted_data = sorted(data, key=lambda x: x[f"{sortBy}"])
 
     startIndex = strana * 15 - 15
     endIndex = strana * 15
 
-    return {"pocet_stran": getPageCount(sorted_data), "prace" : sorted_data[startIndex:endIndex]}
+    sorted_data = sorted_data[startIndex:endIndex]
+
+    if direction == "Z-A":
+        sorted_data.reverse()
+
+    return {"pocet_stran": pocet_stran, "prace" : sorted_data}
 
 
 def getPageCount(tasks: list):
