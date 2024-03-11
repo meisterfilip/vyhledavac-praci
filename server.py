@@ -501,10 +501,10 @@ async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, directionDown: boo
     startIndex = strana * 15 - 15
     endIndex = strana * 15
 
-    sorted_data = sorted_data[startIndex:endIndex]
-
     if directionDown == False:
         sorted_data.reverse()
+
+    sorted_data = sorted_data[startIndex:endIndex]
 
     return {"pocet_stran": pocet_stran, "prace" : sorted_data}
 
