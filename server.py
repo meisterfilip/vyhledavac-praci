@@ -276,6 +276,18 @@ async def filtr(filtr : Filtr):
         if data == []:
             return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
         
+    # filtrovani autora
+        
+    if filtr.jmeno_prijmeni != None:
+        for prace in data:
+            if prace["jmeno_prijmeni"].lower() == filtr.jmeno_prijmeni.lower():
+                platne_prace.append(prace)
+
+        data = platne_prace
+        platne_prace = []
+        if data == []:
+            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
+
     # tagy
 
     if filtr.tagy != None:
@@ -304,7 +316,7 @@ async def getVedouci():
         if prace["vedouci"] not in vedouci:
             vedouci.append(prace["vedouci"])
 
-    return vedouci
+    return sorted(vedouci)
 
 
 @app.get("/get-predmety")
@@ -325,7 +337,6 @@ async def getPredmety():
 async def getAutori():
     autori = []
     
-    
     data = supabase.table("tasks").select("*").execute()
     data = data.dict()["data"]
 
@@ -333,7 +344,9 @@ async def getAutori():
         if prace["jmeno_prijmeni"] not in autori:
             autori.append(prace["jmeno_prijmeni"])
 
-    return autori
+    
+
+    return sorted(autori)
 
 
 @app.get("/load-prvnich-deset")
@@ -473,6 +486,18 @@ async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, directionDown: boo
     if filtr.vedouci != None:
         for prace in data:
             if prace["vedouci"].lower() == filtr.vedouci.lower():
+                platne_prace.append(prace)
+
+        data = platne_prace
+        platne_prace = []
+        if data == []:
+            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
+        
+    # filtrovani autora
+        
+    if filtr.jmeno_prijmeni != None:
+        for prace in data:
+            if prace["jmeno_prijmeni"].lower() == filtr.jmeno_prijmeni.lower():
                 platne_prace.append(prace)
 
         data = platne_prace

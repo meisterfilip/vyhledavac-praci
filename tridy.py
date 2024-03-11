@@ -26,4 +26,5 @@ class Filtr(BaseModel):
     koncovy_rok     : Optional[int] = None
     predmet         : Optional[str] = None
     vedouci         : Optional[str] = None
+    jmeno_prijmeni  : Optional[str] = None
     tagy            : Optional[list] = None
