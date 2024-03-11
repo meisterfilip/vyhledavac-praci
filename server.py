@@ -419,6 +419,9 @@ async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, directionDown: boo
     if filtr.vedouci == "" or filtr.vedouci == "string":
         filtr.vedouci = None
 
+    if filtr.jmeno_prijmeni == "" or filtr.jmeno_prijmeni == "string":
+        filtr.jmeno_prijmeni = None
+
     if filtr.tagy == [] or filtr.tagy[0] == "string":
         filtr.tagy = None
 
@@ -496,7 +499,7 @@ async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, directionDown: boo
     # filtrovani autora
         
     if filtr.jmeno_prijmeni != None:
-        for prace in data:
+        for prace in data:  
             if prace["jmeno_prijmeni"].lower() == filtr.jmeno_prijmeni.lower():
                 platne_prace.append(prace)
 
