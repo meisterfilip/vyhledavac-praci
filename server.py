@@ -574,4 +574,4 @@ async def searchPage(searchString: str, strana: int, sortBy: str, directionDown:
 
     sorted_data = sorted_data[startIndex:endIndex]
 
-    return {"pocetStran": pocetStran, "prace": sorted_data}
+    return {"pocet_stran": pocetStran, "prace": sorted_data}
