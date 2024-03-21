@@ -544,20 +544,28 @@ def getPageCount(tasks: list):
     return pocetStran
 
 @app.post("/search-page/{strana}")
-async def searchPage(searchString: str, strana: int, sortBy: str, directionDown: bool):
+async def searchPage(strana: int, sortBy: str, directionDown: bool, searchString: str = None):
 
-    sloupce = ["jmeno_prijmeni", "tema", "obsah", "prakticka_cast", "vedouci"]
-    platne_prace = []
+    
 
-    for sloupec in sloupce:
-        data = supabase.table("tasks").select("*").ilike(f"{sloupec}", f"%{searchString}%").execute()
-        data = data.dict()
-        data = data["data"]
+    if searchString != None:
+        sloupce = ["jmeno_prijmeni", "tema", "obsah", "prakticka_cast", "vedouci"]
+        platne_prace = []
 
-        if data != []:
-            for prace in data:
-                if prace not in platne_prace:
-                    platne_prace.append(prace)
+        for sloupec in sloupce:
+            data = supabase.table("tasks").select("*").ilike(f"{sloupec}", f"%{searchString}%").execute()
+            data = data.dict()
+            data = data["data"]
+
+            if data != []:
+                for prace in data:
+                    if prace not in platne_prace:
+                        platne_prace.append(prace)
+
+    else:
+        platne_prace = supabase.table("tasks").select("*").execute()
+        platne_prace = platne_prace.dict()["data"]
+
                     
     if platne_prace == []:
         return {"Message": "Žádná práce nebyla nalezena!"}
