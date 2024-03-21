@@ -399,7 +399,7 @@ async def getOldestYear():
 
     return oldestYear
 
-@app.post("/filtr-strana/{strana}")
+@app.post("/filter-page/{strana}")
 async def filtrStrana(strana: int, filtr: Filtr, sortBy: str, directionDown: bool):
 
     if filtr.obor == [] or filtr.obor[0] == "string":
@@ -542,3 +542,36 @@ def getPageCount(tasks: list):
     pocetStran = ceil(pocetPraci / 15)
 
     return pocetStran
+
+@app.post("/search-page/{strana}")
+async def searchPage(searchString: str, strana: int, sortBy: str, directionDown: bool):
+
+    sloupce = ["jmeno_prijmeni", "tema", "obsah", "prakticka_cast", "vedouci"]
+    platne_prace = []
+
+    for sloupec in sloupce:
+        data = supabase.table("tasks").select("*").ilike(f"{sloupec}", f"%{searchString}%").execute()
+        data = data.dict()
+        data = data["data"]
+
+        if data != []:
+            for prace in data:
+                if prace not in platne_prace:
+                    platne_prace.append(prace)
+                    
+    if platne_prace == []:
+        return {"Message": "Žádná práce nebyla nalezena!"}
+    
+    pocetStran = getPageCount(platne_prace)
+
+    sorted_data = sorted(platne_prace, key=lambda x: x[f"{sortBy}"])   
+
+    startIndex = strana * 15 - 15
+    endIndex = strana * 15
+
+    if directionDown == False:
+        sorted_data.reverse()
+
+    sorted_data = sorted_data[startIndex:endIndex]
+
+    return {"pocetStran": pocetStran, "prace": sorted_data}
