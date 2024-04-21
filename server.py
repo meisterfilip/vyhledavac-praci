@@ -11,8 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 #import hashlib
 import datetime
 from math import ceil
-from io import BytesIO
-from fastapi.responses import StreamingResponse
 
 
 load_dotenv()
