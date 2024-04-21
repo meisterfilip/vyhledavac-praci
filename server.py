@@ -1,16 +1,19 @@
 # import knihovny databazoveho systemu Supabase a knihovny OS
 
 from tridy import *
-from supabase import create_client, Client
+from supabase import create_client#, Client
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, Path, UploadFile
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException#, Path, UploadFile
+#from pydantic import BaseModel
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
-import hashlib
+#import hashlib
 import datetime
 from math import ceil
+from io import BytesIO
+from fastapi.responses import StreamingResponse
+
 
 load_dotenv()
 
@@ -49,261 +52,6 @@ async def search_task_by_id(id: int):
     except:
         return {"Error": f"Task s id {id} neexistuje"}
     
-
-@app.get("/print_ids")
-async def print_ids():
-    data = supabase.table("tasks").select("id").execute()
-    return data
-
-
-@app.post("/create_task")
-async def create_task(task : Task):
-    data = supabase.table("tasks").insert(task.dict()).execute()
-    return task
-
-
-# funkce load_ids() slouzi k nacteni ID vsech praci v db do pole (all_ids)
-async def load_ids():
-    all_ids = []
-    db_response = supabase.table("tasks").select("id").execute().dict()["data"]
-
-    for task in db_response:
-        all_ids.append(task["id"])
-
-    return all_ids
-
-
-# endpoint delete_id - vyhleda radek v databazi se zadanym ID a vymaze cely radek s timto ID (DODELAT RETURN!!!)
-@app.delete("/delete_task_by_id/{id}")
-async def delete_task_by_id(id):
-
-    ids = load_ids()
-
-    if int(id) in ids:
-        data = supabase.table("tasks").delete().eq("id", f"{id}").execute()
-        return {"Message": f"Task s ID {id} byl úspěšně smazán!"}
-
-    else:
-        return {"Error": f"Task s ID {id} nebyl nalezen! Smazani neproběhlo!"}
-    
-
-# endpoint na registraci noveho uzivatele
-@app.post("/register")
-async def register(newuser : newUser):
-
-    data = supabase.table("users").select("login").execute()
-
-    data = data.dict()
-    data = data["data"]
-    logins = []
-
-    for jmeno in data:
-        logins.append(jmeno["login"])
-
-
-    if newuser.login in logins:
-        print("Jmeno uz existuje!")
-        return {"Message": f"Uzivatel se jmenem '{newuser.login}' jiz existuje!"}
-    
-    if newuser.password != newuser.password_again:
-        return {"Message": "Hesla se neshodují!"}
-    
-    if len(newuser.password) < 8:
-        return {"Message": "Heslo musí mít minimálně 8 znaků!"}
-
-    hasher = hashlib.sha256()
-
-    hasher.update(newuser.password.encode('utf-8'))
-    hashed_password = hasher.hexdigest()
-
-    data = supabase.table("users").insert({'login': f"{newuser.login}", 'hashed_password': f"{hashed_password}"}).execute()
-
-    return {"Message": f"Uzivatel {newuser.login} uspesne zaregistrovan!"}
-
-
-# endpoint na login uzivatele
-@app.post("/login")
-async def login(user : User):
-
-    hasher = hashlib.sha256()
-    hashed_password_pokus = ""
-
-    hasher.update(user.password.encode('utf-8'))
-    hashed_password_pokus = hasher.hexdigest()
-
-    data = supabase.table("users").select("*").execute()
-    data = data.dict()
-    data = data["data"]
-    
-    for i in data:
-        
-        if i["login"] == user.login:
-            if i["hashed_password"] == hashed_password_pokus:
-                
-                return {"Message": "Úspěšně jste se přihlásili!"}
-
-    return {"Message": "Špatné heslo!"}
-
-
-@app.post("/upload_file")
-async def upload_file(soubor: UploadFile):
-
-    data = supabase.storage.from_("soubory").upload(soubor.filename, soubor.filename)
-
-    return {"Message": "Soubor byl uspesne nahran!"}
-
-@app.get("/download_file")
-async def download_file():
-
-    data = supabase.storage.from_("soubory").get_public_url("bitcoin.jpg")
-
-    return {"Message": data}
-
-
-# SYSTÉM VYHLEDÁVÁNÍ
-@app.post("/search")
-async def search(vyraz : str):
-
-    sloupce = ["jmeno_prijmeni", "tema", "obsah", "prakticka_cast", "vedouci"]
-    platne_prace = []
-
-    for sloupec in sloupce:
-        data = supabase.table("tasks").select("*").ilike(f"{sloupec}", f"%{vyraz}%").execute()
-        data = data.dict()
-        data = data["data"]
-
-        if data != []:
-            for prace in data:
-                if prace not in platne_prace:
-                    platne_prace.append(prace)
-                    
-    if platne_prace == []:
-        return {"Message": "Žádná práce nebyla nalezena!"}
-    
-    return platne_prace
-
-@app.post("/search-by-filter")
-async def filtr(filtr : Filtr):
-
-    if filtr.obor == [] or filtr.obor[0] == "string":
-        filtr.obor = None
-
-    if filtr.pocatecni_rok == 0:
-        filtr.pocatecni_rok = 2000
-
-    if filtr.koncovy_rok == 0:
-        today = datetime.date.today()
-        aktualni_rok = today.year
-        filtr.koncovy_rok = aktualni_rok
-
-    if filtr.predmet == "" or filtr.predmet == "string":
-        filtr.predmet = None
-
-    if filtr.vedouci == "" or filtr.vedouci == "string":
-        filtr.vedouci = None
-
-    if filtr.tagy == [] or filtr.tagy[0] == "string":
-        filtr.tagy = None
-
-    
-    # filtrovani oboru
-    
-    platne_prace = []
-        
-        
-    if filtr.obor != None:
-        data = supabase.table("tasks").select("*").execute()
-        data = data.dict()
-        data = data["data"]
-        for prace in data:
-            if prace["obor"] in filtr.obor:
-                platne_prace.append(prace)
-
-
-    else:
-        data = supabase.table("tasks").select("*").execute()
-        data = data.dict()
-        data = data["data"]
-        platne_prace = data
-        
-
-    
-    if platne_prace == []:
-        return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
-
-    data = platne_prace
-    platne_prace = []
-
-    # filtrovani roku
-    
-    if filtr.pocatecni_rok != None or filtr.koncovy_rok != None:
-        for prace in data:
-            #print(prace["skolni_rok"][5:9])
-            koncovy_rok = int(prace["skolni_rok"][5:9]) #vezme koncovy rok z promenne skolni_rok a prevede ho na int
-            pocatecni_rok = koncovy_rok - 1
-            if (koncovy_rok >= filtr.pocatecni_rok) and (pocatecni_rok <= filtr.koncovy_rok):
-                platne_prace.append(prace)
-
-        data = platne_prace
-        platne_prace = []
-
-        if data == []:
-            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
-
-
-    # filtrovani predmetu
-
-    if filtr.predmet != None:
-        for prace in data:
-            if prace["predmet"].lower() == filtr.predmet.lower():
-                platne_prace.append(prace)
-
-        data = platne_prace
-        platne_prace = []
-        if data == []:
-            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
-    
-    
-    # filtrovani vedouciho
-
-    if filtr.vedouci != None:
-        for prace in data:
-            if prace["vedouci"].lower() == filtr.vedouci.lower():
-                platne_prace.append(prace)
-
-        data = platne_prace
-        platne_prace = []
-        if data == []:
-            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
-        
-    # filtrovani autora
-        
-    if filtr.jmeno_prijmeni != None:
-        for prace in data:
-            if prace["jmeno_prijmeni"].lower() == filtr.jmeno_prijmeni.lower():
-                platne_prace.append(prace)
-
-        data = platne_prace
-        platne_prace = []
-        if data == []:
-            return {"Message": "Žádná práce se zadanými parametry nebyla nalezena!"}
-
-    # tagy
-
-    if filtr.tagy != None:
-
-        for tag in filtr.tagy:
-            for prace in data:
-                for sloupec in prace:
-                    if str(tag).lower() in str(prace[sloupec]).lower() and sloupec != "id":
-                        if prace not in platne_prace:
-                            platne_prace.append(prace)
-
-        data = platne_prace
-        platne_prace = []
-
-    return data
-
 
 @app.get("/get-vedouci")
 async def getVedouci():
@@ -348,41 +96,6 @@ async def getAutori():
 
     return sorted(autori)
 
-
-@app.get("/load-prvnich-deset")
-async def loadPrvnichDeset():
-
-    data = supabase.table("tasks").select("*").execute()
-    data = data.dict()["data"]
-    print(data[0:10])
-
-    return data[0:10]
-
-
-@app.get("/load-page/{strana}")
-async def loadMore(strana : int):
-
-    data = supabase.table("tasks").select("*").execute()
-    data = data.dict()["data"]
-
-    startIndex = strana * 15 - 15
-    endIndex = strana * 15
-
-    return data[startIndex:endIndex]
-
-
-@app.post("/upload-file")
-async def uploadFile(file : UploadFile):
-    try:
-        
-        file_content = file.file.read()
-        filename = file.filename
-        supabase.storage.from_("soubory").upload(file=file_content, path=f"files/{filename}")
-
-        return {"Message" : "Soubor byl úspěšně nahrán!"}
-        
-    except Exception as e:
-        return {"Message" : f"{e}"}
 
 @app.get("/get-oldest-year")
 async def getOldestYear():
@@ -583,3 +296,14 @@ async def searchPage(strana: int, sortBy: str, directionDown: bool, searchString
     sorted_data = sorted_data[startIndex:endIndex]
 
     return {"pocet_stran": pocetStran, "prace": sorted_data}
+
+@app.get("/get-images-from-id/{user_id}")
+async def get_image(user_id: str):
+
+    public_urls = []
+    for file_name in supabase.storage.from_("user-images").list(user_id):
+        if len(supabase.storage.from_("user-images").list(user_id)) > 0:
+            public_urls.append(supabase.storage.from_("user-images").get_public_url(f"{user_id}/{file_name["name"]}"))
+
+    return public_urls
+
