@@ -301,7 +301,7 @@ async def get_image(user_id: str):
     public_urls = []
     for file_name in supabase.storage.from_("user-images").list(user_id):
         if len(supabase.storage.from_("user-images").list(user_id)) > 0:
-            public_urls.append(supabase.storage.from_("user-images").get_public_url(f"{user_id}/{file_name["name"]}"))
+            public_urls.append(supabase.storage.from_("user-images").get_public_url(f"{user_id}/{file_name['name']}"))
 
     return public_urls
 
