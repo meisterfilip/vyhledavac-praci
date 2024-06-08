@@ -305,3 +305,31 @@ async def get_image(user_id: str):
             public_urls.append(supabase.storage.from_("user-images").get_public_url(f"{user_id}/{file_name['name']}"))
 
     return public_urls
+
+@app.get("/insert-image-by-id/{user_id}") # U této funkce dodělat možnost nahrání obrázku přímo od uživatele
+async def insert_image(user_id: str):
+
+    bucketName = "user-images"
+    allIds = []
+    
+    response = supabase.storage.from_(bucketName).list()
+    for folder in response:
+        folderName = folder["name"]
+        allIds.append(folderName)
+
+    # Lze optimalizovat - nemusí zde být if else - později upravit
+    if user_id in allIds:
+        print("ano, složka již existuje")
+        with open("test.txt", 'rb') as f:
+            supabase.storage.from_(bucketName).upload(file=f ,path=f"{user_id}/{f.name}")
+        # Zde bude funkce, která vezme obrázek a vloží ji do složky s příslušným ID
+
+    else:
+        print("ne, složka zatím neexistuje, bude vytvořena")
+
+        with open("test.txt", 'rb') as f:
+            supabase.storage.from_(bucketName).upload(file=f ,path=f"{user_id}/{f.name}") # !!!Tuto část kódu smazat poté co zde bude vložena funkce!!!
+
+        # Zde bude funkce, která vezme obrázek a vloží ji do složky s příslušným ID
+
+    return {"Message": f"Soubor {f.name} úspěšně nahrán do bucketu {bucketName} do adresáře {user_id}/{f.name}"}
