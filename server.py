@@ -299,9 +299,9 @@ async def searchPage(strana: int, sortBy: str, directionDown: bool, searchString
 async def get_image(user_id: str):
 
     public_urls = []
-    for file_name in supabase.storage.from_("user-images").list(user_id):
-        if len(supabase.storage.from_("user-images").list(user_id)) > 0:
+    user_images = supabase.storage.from_("user-images").list(user_id)
+    for file_name in user_images:
+        if len(user_images) > 0:
             public_urls.append(supabase.storage.from_("user-images").get_public_url(f"{user_id}/{file_name['name']}"))
 
     return public_urls
-
