@@ -4,7 +4,7 @@ from tridy import *
 from supabase import create_client#, Client
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException#, Path, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile#, Path
 #from pydantic import BaseModel
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -306,8 +306,8 @@ async def get_image(user_id: str):
 
     return public_urls
 
-@app.get("/insert-image-by-id/{user_id}") # U této funkce dodělat možnost nahrání obrázku přímo od uživatele
-async def insert_image(user_id: str):
+@app.post("/upload-file-by-id/{user_id}") # U této funkce dodělat možnost nahrání obrázku přímo od uživatele
+async def upload_file_by_id(user_id: str):
 
     bucketName = "user-images"
     allIds = []
@@ -333,3 +333,15 @@ async def insert_image(user_id: str):
         # Zde bude funkce, která vezme obrázek a vloží ji do složky s příslušným ID
 
     return {"Message": f"Soubor {f.name} úspěšně nahrán do bucketu {bucketName} do adresáře {user_id}/{f.name}"}
+
+@app.post("/upload-file")
+async def upload_file(user_id: str, file: UploadFile | None = None):
+
+    if not file:
+        return{"Message": "Nebyl nahrán soubor"}
+    
+    file_obsah = await file.read()
+
+    supabase.storage.from_("user-images").upload(file=file_obsah, path=f"{user_id}/{file.filename}")
+
+    return {"Message": "Hotovo"}
