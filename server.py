@@ -345,3 +345,13 @@ async def upload_file(user_id: str, file: UploadFile | None = None):
     supabase.storage.from_("user-images").upload(file=file_obsah, path=f"{user_id}/{file.filename}")
 
     return {"Message": "Hotovo"}
+
+@app.post("/upload-files")
+async def upload_files(files: list[UploadFile] = None):
+
+    filenames = [file.filename for file in files]
+
+    # Spojení všech hodnot do jednoho řetězce odděleného čárkami
+    str_files_joined = ", ".join(filenames)
+
+    return {"Message": f"Soubor(y) {str_files_joined} nahrán(y)!"}
